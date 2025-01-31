@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 
 import User from '../model/userModel.js';
 import { setToken } from '../util/authToken.js';
+import userAuth from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -49,6 +50,19 @@ router.post('/login', async (req, res) => {
         res.status(200).json({ success: true, token, message: 'Login successful' });
     } catch (error) {
         console.error('Login Error:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
+router.get('/verify', userAuth, async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.user });
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        res.status(200).json({ success: true, message: 'User verified successfully' });
+    } catch (error) {
+        console.error('Verification Error:', error);
         res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 });

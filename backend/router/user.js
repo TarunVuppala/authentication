@@ -36,7 +36,10 @@ router.post('/data', async (req, res) => {
             name,
             dob
         });
-
+        const user = await User.findById(req.userId);
+        user.data.push(newData._id);
+        await user.save();
+        
         res.status(201).json({ success: true, message: 'Data added successfully', data: newData });
     } catch (error) {
         console.error('Error adding data:', error);
@@ -44,35 +47,35 @@ router.post('/data', async (req, res) => {
     }
 });
 
-router.get('/data', async (req, res) => {
+router.get("/data", async (req, res) => {
     try {
-        let { page, limit } = req.query;
-        page = parseInt(page) || 1;
-        limit = parseInt(limit) || 10;
-
-        const totalData = await Data.countDocuments({ userId: req.userId });
-        const userData = await Data.find({ userId: req.userId })
-            .skip((page - 1) * limit)
-            .limit(limit);
-
-        const dataWithAge = userData.map(entry => ({
-            ...entry._doc,
-            age: entry.age, 
-        }));
-
-        res.json({
-            success: true,
-            totalData,
-            totalPages: Math.ceil(totalData / limit),
-            currentPage: page,
-            data: dataWithAge
-        });
+      let { page, limit } = req.query;
+      page = parseInt(page) || 1;
+      limit = parseInt(limit) || 20;
+  
+      const totalData = await Data.countDocuments({ userId: req.userId });
+      const userData = await Data.find({ userId: req.userId })
+        .skip((page - 1) * limit)
+        .limit(limit);
+  
+      const dataWithAge = userData.map((entry) => ({
+        ...entry._doc,
+        age: entry.age,
+      }));
+  
+      res.json({
+        success: true,
+        totalData,
+        totalPages: Math.ceil(totalData / limit),
+        currentPage: page,
+        data: dataWithAge,
+      });
     } catch (error) {
-        console.error('Error fetching data:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+      console.error("Error fetching data:", error);
+      res.status(500).json({ success: false, error: "Internal Server Error" });
     }
-});
-
+  });
+  
 router.put('/data/:id', async (req, res) => {
     try {
         const { name, dob } = req.body;
@@ -97,6 +100,10 @@ router.put('/data/:id', async (req, res) => {
 router.delete('/data/:id', async (req, res) => {
     try {
         const deletedData = await Data.findOneAndDelete({ _id: req.params.id, userId: req.userId });
+        const user = await User.findById(req.userId);
+
+        user.data.pull(deletedData._id);
+        await user.save();
 
         if (!deletedData) {
             return res.status(404).json({ success: false, error: 'Data not found' });
