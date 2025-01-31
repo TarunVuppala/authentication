@@ -12,7 +12,10 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://authentication-eight-opal.vercel.app/', 'https://authentication-taruns-projects-93c37392.vercel.app', 'https://authentication-git-main-taruns-projects-93c37392.vercel.app'],
+    credentials: true
+}));
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB connected.'))
